@@ -7,4 +7,9 @@
   :dependencies [[aleph "0.4.1"]
                  [org.clojure/clojure "1.8.0"]]
 
-  :main takelist.core)
+  :profiles {:dev
+             {:source-paths ["dev"]
+              :dependencies [[org.clojure/tools.namespace "0.2.11"]]}
+
+             :production
+             {:main takelist.core}})
