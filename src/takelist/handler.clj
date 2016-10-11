@@ -15,7 +15,7 @@
            :integrity "sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
            :crossorigin "anonymous"}]])
 
-(defn order-form-handler [req]
+(defn order-form-handler [{:keys [product]}]
   {:status 200
    :body
    (html
@@ -27,8 +27,8 @@
          [:div {:class "col-xs-12 col-xs-offset-0 col-sm-4 col-sm-offset-4"}
           [:form {:action "/post-order" :method "post"}
            [:div {:class "form-group"}
-            [:p "Hiermit bestelle ich ein TODO."]
-            [:input {:type "hidden" :name "product-id" :value "dummy"}]]
+            [:p (format "Hiermit bestelle ich ein %s." (:name product))]
+            [:input {:type "hidden" :name "product-id" :value (:id product)}]]
            [:div {:class "form-group"}
             [:label {:for "amount"} "Anzahl"]
             [:select {:id "amount" :name "amount" :class "form-control"}
@@ -36,15 +36,15 @@
                [:option {:value x} x])]]
            [:button {:type "submit" :class "btn btn-primary"} "Ok"]]]]]]])})
 
-(defn order-post-handler [{:keys [params]}]
+(defn order-post-handler [{:keys [product params]}]
   {:status 200
    :body
    (html
      [:html
       (head)
       [:body
-       [:p (let [{:keys [product-id amount]} params]
-             (format "Vielen Dank für das Bestellen von %s %s." amount product-id))]]])})
+       [:p (let [{:keys [amount]} params]
+             (format "Vielen Dank für das Bestellen von %s %s." amount (:name product)))]]])})
 
 (defn not-found-handler [req]
   {:status 404
