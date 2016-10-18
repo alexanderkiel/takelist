@@ -2,6 +2,7 @@
   (:require [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
             [takelist.handler :as h]
+            [takelist.middleware.content-type :refer [wrap-content-type]]
             [takelist.middleware.product :refer [wrap-product]]))
 
 (defn routing-handler [req]
@@ -12,6 +13,7 @@
 
 (def app
   (-> routing-handler
+      (wrap-content-type "text/html")
       wrap-product
       wrap-keyword-params
       wrap-params))
