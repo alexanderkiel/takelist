@@ -3,7 +3,8 @@
             [ring.middleware.params :refer [wrap-params]]
             [takelist.handler :as h]
             [takelist.middleware.content-type :refer [wrap-content-type]]
-            [takelist.middleware.product :refer [wrap-product]]))
+            [takelist.middleware.product :refer [wrap-product]]
+            [takelist.middleware.user :refer [wrap-user]]))
 
 (defn routing-handler [req]
   (case (:uri req)
@@ -19,5 +20,6 @@
   (-> routing-handler
       (wrap-content-type "text/html")
       (wrap-product (:db conf))
+      (wrap-user (:db conf))
       wrap-keyword-params
       wrap-params))

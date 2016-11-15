@@ -5,5 +5,5 @@
   (fn [request]
     (let [params (:params request)
           id (:product-id params)
-          product (first (j/query db ["select * from product where id = ?" id]))]
+          product (first (j/query db ["select * from tkl_product where id = ?" id]))]
       (handler (assoc request :product product)))))

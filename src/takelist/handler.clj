@@ -15,7 +15,7 @@
            :integrity "sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
            :crossorigin "anonymous"}]])
 
-(defn order-form-handler [{:keys [product]}]
+(defn order-form-handler [{:keys [product user]}]
   {:status 200
    :body
    (html
@@ -27,7 +27,7 @@
          [:div {:class "col-xs-12 col-xs-offset-0 col-sm-4 col-sm-offset-4"}
           [:form {:action "/post-order" :method "post"}
            [:div {:class "form-group"}
-            [:p (format "Hiermit bestelle ich %s." (:name product))]
+            [:p (format "Hiermit bestelle ich (%s) %s." (:name user) (:name product))]
             [:input {:type "hidden" :name "product-id" :value (:id product)}]]
            [:div {:class "form-group"}
             [:label {:for "amount"} "Anzahl"]
