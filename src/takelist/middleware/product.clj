@@ -1,9 +1,9 @@
-(ns takelist.middleware.product)
+(ns takelist.middleware.product
+  (:require [clojure.java.jdbc :as j]))
 
-(def dummy-product
-  {:id "abc123"
-   :name "Dummy-Product"})
-
-(defn wrap-product [handler]
+(defn wrap-product [handler db]
   (fn [request]
-    (handler (assoc request :product dummy-product))))
+    (let [params (:params request)
+          id (:product-id params)
+          product (first (j/query db ["select * from product where id = ?" id]))]
+      (handler (assoc request :product product)))))

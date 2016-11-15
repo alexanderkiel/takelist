@@ -11,9 +11,13 @@
     "/post-order" (h/order-post-handler req)
     (h/not-found-handler req)))
 
-(def app
+(defn app
+  "Whole application ring handler.
+
+  Conf is a map of :db and other things."
+  [conf]
   (-> routing-handler
       (wrap-content-type "text/html")
-      wrap-product
+      (wrap-product (:db conf))
       wrap-keyword-params
       wrap-params))

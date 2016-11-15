@@ -15,8 +15,14 @@
    ;; Clojure itself
    [org.clojure/clojure "1.8.0"]
 
+   ;; Database driver
+   [org.clojure/java.jdbc "0.6.1"]
+
    ;; Web middleware and handler specification
-   [ring/ring-core "1.5.0"]]
+   [ring/ring-core "1.5.0"]
+
+   ;; In-Memory Database System
+   [com.h2database/h2 "1.4.192"]]
 
   :profiles {:dev
              {:source-paths ["dev"]
