@@ -19,14 +19,15 @@
    [org.clojure/java.jdbc "0.6.1"]
 
    ;; Web middleware and handler specification
-   [ring/ring-core "1.5.0"]
-
-   ;; In-Memory Database System
-   [com.h2database/h2 "1.4.192"]]
+   [ring/ring-core "1.5.0"]]
 
   :profiles {:dev
              {:source-paths ["dev"]
-              :dependencies [[org.clojure/tools.namespace "0.2.11"]]}
+              :dependencies [
+                             ;; In-Memory Database System
+                             [com.h2database/h2 "1.4.192"]
+
+                             [org.clojure/tools.namespace "0.2.11"]]}
 
              :production
              {:main takelist.core}})
