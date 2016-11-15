@@ -6,7 +6,7 @@
 
 (def db {:classname "org.h2.Driver"
          :subprotocol "h2:file"
-         :subname "~/db/my-webapp1"})
+         :subname "~/.takelist/db"})
 
 (def server (http/start-server (app {:db db}) {:port 8080}))
 
@@ -23,8 +23,8 @@
 )
 
 (comment
-  (j/insert! db "product" [:id :name] ["123" "Club Mate"])
-  (j/insert! db "product" [:id :name] ["2" "Kaffee"])
+  (j/insert! db "product" [:id :name] ["1" "Kaffee"])
+  (j/insert! db "product" [:id :name] ["2" "Club Mate"])
   )
 
 (comment
