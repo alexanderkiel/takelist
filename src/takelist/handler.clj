@@ -27,7 +27,7 @@
          [:div {:class "col-xs-12 col-xs-offset-0 col-sm-4 col-sm-offset-4"}
           [:form {:action "/post-order" :method "post"}
            [:div {:class "form-group"}
-            [:p (format "Hiermit bestelle ich ein %s." (:name product))]
+            [:p (format "Hiermit bestelle ich %s." (:name product))]
             [:input {:type "hidden" :name "product-id" :value (:id product)}]]
            [:div {:class "form-group"}
             [:label {:for "amount"} "Anzahl"]
