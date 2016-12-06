@@ -8,8 +8,10 @@
 
 (defn routing-handler [req]
   (case (:uri req)
+    "/" (h/home-handler req)
     "/order" (h/order-form-handler req)
     "/post-order" (h/order-post-handler req)
+    "/oauth2-code" (h/oauth2-code-handler req)
     (h/not-found-handler req)))
 
 (defn app

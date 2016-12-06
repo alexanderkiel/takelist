@@ -9,6 +9,9 @@
    ;; Webserver
    [aleph "0.4.1"]
 
+   ;; Umgebungsvariablen
+   [environ "1.1.0"]
+
    ;; HTML Output
    [hiccup "1.0.5"]
 

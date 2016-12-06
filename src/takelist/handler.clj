@@ -2,6 +2,7 @@
   "Here are all our handlers."
   (:require [clojure.pprint]
             [clojure.string :as str]
+            [environ.core :refer [env]]
             [hiccup.core :refer [html]]))
 
 (defn head
@@ -13,7 +14,53 @@
    [:link {:rel "stylesheet"
            :href "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
            :integrity "sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
-           :crossorigin "anonymous"}]])
+           :crossorigin "anonymous"}]
+   [:script {:src "//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"}]
+   [:script {:src "https://apis.google.com/js/client:platform.js?onload=start" :async "true" :defer "true"}]
+   [:script
+    (format "function start() {
+      gapi.load('auth2', function() {
+        auth2 = gapi.auth2.init({
+          client_id: '%s'
+        });
+      });
+    }
+    function signInCallback(authResult) {
+      if (authResult['code']) {
+
+        // Send the code to the server
+        $.ajax({
+          type: 'POST',
+          url: 'http://localhost:8080/oauth2-code',
+          contentType: 'application/octet-stream; charset=utf-8',
+          success: function(result) {
+            // Handle or verify the server response.
+          },
+          processData: false,
+          data: authResult['code']
+        });
+      } else {
+        // There was an error.
+      }
+    }
+    " (:client-id env))]])
+
+(defn home-handler [_]
+  {:status 200
+   :body
+   (html
+     [:html
+      (head)
+      [:body
+       [:div {:class "container"}
+        [:div {:class "row"}
+         [:div {:class "col-xs-4 col-xs-offset-4"}
+          [:button {:id "signinButton"} "Mit Google einloggen"]
+          [:script
+           "$('#signinButton').click(function() {
+             // signInCallback defined in step 6.
+              auth2.grantOfflineAccess({'redirect_uri': 'postmessage'}).then(signInCallback);
+                });"]]]]]])})
 
 (defn order-form-handler [{:keys [product user]}]
   {:status 200
@@ -45,6 +92,11 @@
       [:body
        [:p (let [{:keys [amount]} params]
              (format "Vielen Dank für das Bestellen von %s %s." amount (:name product)))]]])})
+
+(defn oauth2-code-handler [{:keys [body]}]
+  (println "code" (slurp body))
+  {:status 200
+   :body ""})
 
 (defn not-found-handler [req]
   {:status 404

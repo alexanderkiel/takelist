@@ -2,22 +2,24 @@
   (:require [aleph.http :as http]
             [clojure.java.jdbc :as j]
             [clojure.tools.namespace.repl :refer [refresh]]
-            [takelist.app :refer [app]])
-  (:import [java.util UUID]))
+            [takelist.app :refer [app]]))
 
 (def db {:classname "org.h2.Driver"
          :subprotocol "h2:file"
          :subname "~/.takelist/db"})
 
-(def server nil)
+(defonce server nil)
 
 (defn init []
   (alter-var-root #'server (fn [_] (http/start-server (app {:db db}) {:port 8080}))))
 
+(defn reload []
+  (.close server)
+  (refresh :after 'user/init))
+
 (comment
   (init)
-  (.close server)
-  (refresh :after 'user/init)
+  (reload)
   )
 
 
