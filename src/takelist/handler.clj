@@ -2,7 +2,7 @@
   "Here are all our handlers."
   (:require [aleph.http :as http]
             [clojure.data.json :as json]
-            [clojure.pprint]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [environ.core :refer [env]]
             [hiccup.core :refer [html]]))
@@ -99,14 +99,15 @@
   (let [uri "https://www.googleapis.com/oauth2/v4/token"
         redirect-uri "http://localhost:8080"
         resp @(http/post uri {:form-params {:grant_type "authorization_code"
-                                               :code (slurp body)
-                                               :client_id (:client-id env)
-                                               :client_secret (:client-secret env)
-                                               :redirect_uri redirect-uri}
-                                 :throw-exceptions false})]
+                                            :code (slurp body)
+                                            :client_id (:client-id env)
+                                            :client_secret (:client-secret env)
+                                            :redirect_uri redirect-uri}
+                              :throw-exceptions false})
+        slurp-json (comp #(json/read-str % :key-fn keyword) slurp)]
     (if (= 200 (:status resp))
-      (-> resp :body slurp prn)
-      (let [resp (update resp :body (comp #(json/read-str % :key-fn keyword) slurp))]
+      (-> resp :body slurp-json pprint)
+      (let [resp (update resp :body slurp-json)]
         (case (-> resp :body :error)
           "redirect_uri_mismatch" (println "Wrong redirect uri:" redirect-uri)))))
   {:status 200
