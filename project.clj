@@ -18,6 +18,9 @@
    ;; Clojure itself
    [org.clojure/clojure "1.8.0"]
 
+   ;; JSON parser/generator
+   [org.clojure/data.json "0.2.6"]
+   
    ;; Database driver
    [org.clojure/java.jdbc "0.6.1"]
 

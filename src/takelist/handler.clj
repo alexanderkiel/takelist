@@ -1,6 +1,8 @@
 (ns takelist.handler
   "Here are all our handlers."
-  (:require [clojure.pprint]
+  (:require [aleph.http :as http]
+            [clojure.data.json :as json]
+            [clojure.pprint]
             [clojure.string :as str]
             [environ.core :refer [env]]
             [hiccup.core :refer [html]]))
@@ -94,7 +96,19 @@
              (format "Vielen Dank für das Bestellen von %s %s." amount (:name product)))]]])})
 
 (defn oauth2-code-handler [{:keys [body]}]
-  (println "code" (slurp body))
+  (let [uri "https://www.googleapis.com/oauth2/v4/token"
+        redirect-uri "http://localhost:8080"
+        resp @(http/post uri {:form-params {:grant_type "authorization_code"
+                                               :code (slurp body)
+                                               :client_id (:client-id env)
+                                               :client_secret (:client-secret env)
+                                               :redirect_uri redirect-uri}
+                                 :throw-exceptions false})]
+    (if (= 200 (:status resp))
+      (-> resp :body slurp prn)
+      (let [resp (update resp :body (comp #(json/read-str % :key-fn keyword) slurp))]
+        (case (-> resp :body :error)
+          "redirect_uri_mismatch" (println "Wrong redirect uri:" redirect-uri)))))
   {:status 200
    :body ""})
 
