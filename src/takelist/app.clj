@@ -1,8 +1,10 @@
 (ns takelist.app
   (:require [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
+            [ring.middleware.session :refer [wrap-session]]
             [takelist.handler :as h]
             [takelist.middleware.content-type :refer [wrap-content-type]]
+            [takelist.middleware.db :refer [wrap-db]]
             [takelist.middleware.product :refer [wrap-product]]
             [takelist.middleware.user :refer [wrap-user]]))
 
@@ -23,5 +25,7 @@
       (wrap-content-type "text/html")
       (wrap-product (:db conf))
       (wrap-user (:db conf))
+      (wrap-db (:db conf))
+      wrap-session
       wrap-keyword-params
       wrap-params))

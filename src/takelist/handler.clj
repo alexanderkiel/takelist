@@ -1,11 +1,16 @@
 (ns takelist.handler
   "Here are all our handlers."
   (:require [aleph.http :as http]
+            [buddy.core.keys :as keys]
+            [buddy.sign.jwt :as jwt]
             [clojure.data.json :as json]
+            [clojure.java.jdbc :as j]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [environ.core :refer [env]]
-            [hiccup.core :refer [html]]))
+            [hiccup.core :refer [html]]
+            [takelist.util :as u])
+  (:import (java.util UUID)))
 
 (defn head
   "Generated the HTML head."
@@ -95,7 +100,38 @@
        [:p (let [{:keys [amount]} params]
              (format "Vielen Dank für das Bestellen von %s %s." amount (:name product)))]]])})
 
-(defn oauth2-code-handler [{:keys [body]}]
+(defn unsign [token]
+  (try
+    (jwt/unsign token (keys/public-key "google.pem") {:alg :rs256})
+    (catch Exception _)))
+
+(defn find-user
+  "Searches for a unique user using the specified constraints and returns its properties as requested.
+
+  Throws an exception if more than one user was found."
+  [db props constraints]
+  (let [constraints (into [] constraints)
+        constraint-vals (map second constraints)
+        selection (str "where " (str/join " and " (for [[key] constraints]
+                                                    (str (name key) " = ?"))))]
+    (u/only (j/query db (into [(format "select %s from tkl_user %s" (str/join "," (map name props)) selection)] constraint-vals))))
+  )
+
+(defn create-user [db {:keys [name issuer subject]}]
+  (assert name)
+  (assert issuer)
+  (assert subject)
+  (let [id (UUID/randomUUID)]
+    (j/insert! db "tkl_user" [:id :name :issuer :subject] [id name issuer subject])
+    id))
+
+(defn user-id [db {issuer :iss subject :sub given-name :given_name}]
+  (if-let [{:keys [id]} (find-user db [:id] {:issuer issuer :subject subject})]
+    ; update user name
+    id
+    (create-user db {:name given-name :issuer issuer :subject subject})))
+
+(defn oauth2-code-handler [{:keys [body db]}]
   (let [uri "https://www.googleapis.com/oauth2/v4/token"
         redirect-uri "http://localhost:8080"
         resp @(http/post uri {:form-params {:grant_type "authorization_code"
@@ -106,12 +142,21 @@
                               :throw-exceptions false})
         slurp-json (comp #(json/read-str % :key-fn keyword) slurp)]
     (if (= 200 (:status resp))
-      (-> resp :body slurp-json pprint)
+      ;(-> resp :body slurp-json pprint)
+      (let [id-token (-> resp :body slurp-json :id_token)]
+        (if-let [id-token (unsign id-token)]
+          {:status 200
+           :body ""
+           :session {:user-id (user-id db id-token)}}
+          {:status 500
+           :body "Invalid token..."
+           :session {}}))
       (let [resp (update resp :body slurp-json)]
         (case (-> resp :body :error)
-          "redirect_uri_mismatch" (println "Wrong redirect uri:" redirect-uri)))))
-  {:status 200
-   :body ""})
+          "redirect_uri_mismatch" (println "Wrong redirect uri:" redirect-uri))
+        {:status 500
+         :body ""
+         :session {}}))))
 
 (defn not-found-handler [req]
   {:status 404
