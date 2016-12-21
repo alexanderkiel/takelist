@@ -3,6 +3,7 @@
 
 (defn wrap-user [handler db]
   (fn [request]
+    (println (:session request))
     (let [id "1"
           user (first (j/query db ["select * from tkl_user where id = ?" id]))]
       (handler (assoc request :user user)))))

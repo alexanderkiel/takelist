@@ -9,6 +9,9 @@
    ;; Webserver
    [aleph "0.4.1"]
 
+   ;; JSON Web Token
+   [buddy/buddy-sign "1.3.0"]
+
    ;; Umgebungsvariablen
    [environ "1.1.0"]
 
