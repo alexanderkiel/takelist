@@ -1,16 +1,15 @@
 (ns takelist.handler
   "Here are all our handlers."
   (:require [aleph.http :as http]
-            [buddy.core.keys :as keys]
             [buddy.sign.jwt :as jwt]
-            [clojure.data.json :as json]
+            [cheshire.core :as json]
             [clojure.java.jdbc :as j]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [environ.core :refer [env]]
             [hiccup.core :refer [html]]
             [takelist.util :as u])
-  (:import (java.util UUID)))
+  (:import [java.util UUID]))
 
 (defn head
   "Generated the HTML head."
@@ -100,11 +99,6 @@
        [:p (let [{:keys [amount]} params]
              (format "Vielen Dank für das Bestellen von %s %s." amount (:name product)))]]])})
 
-(defn unsign [token]
-  (try
-    (jwt/unsign token (keys/public-key "google.pem") {:alg :rs256})
-    (catch Exception _)))
-
 (defn find-user
   "Searches for a unique user using the specified constraints and returns its properties as requested.
 
@@ -114,8 +108,7 @@
         constraint-vals (map second constraints)
         selection (str "where " (str/join " and " (for [[key] constraints]
                                                     (str (name key) " = ?"))))]
-    (u/only (j/query db (into [(format "select %s from tkl_user %s" (str/join "," (map name props)) selection)] constraint-vals))))
-  )
+    (u/only (j/query db (into [(format "select %s from tkl_user %s" (str/join "," (map name props)) selection)] constraint-vals)))))
 
 (defn create-user [db {:keys [name issuer subject]}]
   (assert name)
@@ -140,11 +133,10 @@
                                             :client_secret (:client-secret env)
                                             :redirect_uri redirect-uri}
                               :throw-exceptions false})
-        slurp-json (comp #(json/read-str % :key-fn keyword) slurp)]
+        slurp-json (comp #(json/parse-string % keyword) slurp)]
     (if (= 200 (:status resp))
-      ;(-> resp :body slurp-json pprint)
       (let [id-token (-> resp :body slurp-json :id_token)]
-        (if-let [id-token (unsign id-token)]
+        (if-let [id-token (u/unsafe-unsign id-token)]
           {:status 200
            :body ""
            :session {:user-id (user-id db id-token)}}
