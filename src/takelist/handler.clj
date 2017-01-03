@@ -8,8 +8,8 @@
             [clojure.string :as str]
             [environ.core :refer [env]]
             [hiccup.core :refer [html]]
-            [takelist.util :as u])
-  (:import [java.util UUID]))
+            [takelist.db :as db]
+            [takelist.util :as u]))
 
 (defn head
   "Generated the HTML head."
@@ -41,6 +41,7 @@
           contentType: 'application/octet-stream; charset=utf-8',
           success: function(result) {
             // Handle or verify the server response.
+            location.reload(true);
           },
           processData: false,
           data: authResult['code']
@@ -51,7 +52,7 @@
     }
     " (:client-id env))]])
 
-(defn home-handler [_]
+(defn home-handler [{:keys [user]}]
   {:status 200
    :body
    (html
@@ -61,7 +62,9 @@
        [:div {:class "container"}
         [:div {:class "row"}
          [:div {:class "col-xs-4 col-xs-offset-4"}
-          [:button {:id "signinButton"} "Mit Google einloggen"]
+          (if user
+            [:p "Produktliste"]
+            [:button {:id "signinButton"} "Mit Google einloggen"])
           [:script
            "$('#signinButton').click(function() {
              // signInCallback defined in step 6.
@@ -99,30 +102,12 @@
        [:p (let [{:keys [amount]} params]
              (format "Vielen Dank für das Bestellen von %s %s." amount (:name product)))]]])})
 
-(defn find-user
-  "Searches for a unique user using the specified constraints and returns its properties as requested.
-
-  Throws an exception if more than one user was found."
-  [db props constraints]
-  (let [constraints (into [] constraints)
-        constraint-vals (map second constraints)
-        selection (str "where " (str/join " and " (for [[key] constraints]
-                                                    (str (name key) " = ?"))))]
-    (u/only (j/query db (into [(format "select %s from tkl_user %s" (str/join "," (map name props)) selection)] constraint-vals)))))
-
-(defn create-user [db {:keys [name issuer subject]}]
-  (assert name)
-  (assert issuer)
-  (assert subject)
-  (let [id (UUID/randomUUID)]
-    (j/insert! db "tkl_user" [:id :name :issuer :subject] [id name issuer subject])
-    id))
-
 (defn user-id [db {issuer :iss subject :sub given-name :given_name}]
-  (if-let [{:keys [id]} (find-user db [:id] {:issuer issuer :subject subject})]
-    ; update user name
-    id
-    (create-user db {:name given-name :issuer issuer :subject subject})))
+  (if-let [{:keys [id]} (db/find-user db [:id] {:issuer issuer :subject subject})]
+    (do
+      (db/update-user! db id {:name given-name})
+      id)
+    (db/create-user! db {:name given-name :issuer issuer :subject subject})))
 
 (defn oauth2-code-handler [{:keys [body db]}]
   (let [uri "https://www.googleapis.com/oauth2/v4/token"
