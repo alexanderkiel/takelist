@@ -1,6 +1,7 @@
-(ns takelist.middleware.content-type)
+(ns takelist.middleware.content-type
+  (:require [ring.util.response :as rur]))
 
 (defn wrap-content-type [handler content-type]
   (fn [request]
-    (let [response (handler request)]
-      (assoc-in response [:headers "Content-Type"] content-type))))
+    (-> (handler request)
+        (rur/content-type content-type))))
