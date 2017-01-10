@@ -9,6 +9,9 @@
    ;; Webserver
    [aleph "0.4.1"]
 
+   ;; Routing
+   [bidi "2.0.16"]
+
    ;; JSON Web Token
    [buddy/buddy-sign "1.3.0"]
 

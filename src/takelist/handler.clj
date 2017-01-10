@@ -9,11 +9,15 @@
             [environ.core :refer [env]]
             [hiccup.core :refer [html]]
             [takelist.db :as db]
+            [takelist.middleware.auth :refer [wrap-auth]]
+            [takelist.middleware.product :refer [wrap-product]]
+            [takelist.middleware.user :refer [wrap-user]]
             [takelist.util :as u]))
 
 (defn head
   "Generated the HTML head."
-  [& title-parts]
+  [path-for & title-parts]
+  (assert path-for)
   [:head
    [:meta {:charset "utf-8"}]
    [:title (str/join " - " (conj (vec (reverse title-parts)) "TakeList"))]
@@ -37,7 +41,7 @@
         // Send the code to the server
         $.ajax({
           type: 'POST',
-          url: 'http://localhost:8080/oauth2-code',
+          url: '%s',
           contentType: 'application/octet-stream; charset=utf-8',
           success: function(result) {
             // Handle or verify the server response.
@@ -50,14 +54,14 @@
         // There was an error.
       }
     }
-    " (:client-id env))]])
+    " (:client-id env) (path-for :oauth2-code))]])
 
-(defn home-handler [{:keys [user]}]
+(defn home-handler [{:keys [user path-for]}]
   {:status 200
    :body
    (html
      [:html
-      (head)
+      (head path-for)
       [:body
        [:div {:class "container"}
         [:div {:class "row"}
@@ -71,12 +75,12 @@
               auth2.grantOfflineAccess({'redirect_uri': 'postmessage'}).then(signInCallback);
                 });"]]]]]])})
 
-(defn order-form-handler [{:keys [product user]}]
+(defn order-form-handler [{:keys [product user path-for]}]
   {:status 200
    :body
    (html
      [:html
-      (head)
+      (head path-for)
       [:body
        [:div {:class "container"}
         [:div {:class "row"}
@@ -92,12 +96,12 @@
                [:option {:value x} x])]]
            [:button {:type "submit" :class "btn btn-primary"} "Ok"]]]]]]])})
 
-(defn order-post-handler [{:keys [product params]}]
+(defn order-post-handler [{:keys [product params path-for]}]
   {:status 200
    :body
    (html
      [:html
-      (head)
+      (head path-for)
       [:body
        [:p (let [{:keys [amount]} params]
              (format "Vielen Dank für das Bestellen von %s %s." amount (:name product)))]]])})
@@ -109,37 +113,51 @@
       id)
     (db/create-user! db {:name given-name :issuer issuer :subject subject})))
 
-(defn oauth2-code-handler [{:keys [body db]}]
-  (let [uri "https://www.googleapis.com/oauth2/v4/token"
-        redirect-uri "http://localhost:8080"
-        resp @(http/post uri {:form-params {:grant_type "authorization_code"
-                                            :code (slurp body)
-                                            :client_id (:client-id env)
-                                            :client_secret (:client-secret env)
-                                            :redirect_uri redirect-uri}
-                              :throw-exceptions false})
-        slurp-json (comp #(json/parse-string % keyword) slurp)]
-    (if (= 200 (:status resp))
-      (let [id-token (-> resp :body slurp-json :id_token)]
-        (if-let [id-token (u/unsafe-unsign id-token)]
-          {:status 200
-           :body ""
-           :session {:user-id (user-id db id-token)}}
+(defn oauth2-code-handler [{:keys [base-uri]}]
+  (fn [{:keys [body db]}]
+    (let [uri "https://www.googleapis.com/oauth2/v4/token"
+          redirect-uri base-uri
+          resp @(http/post uri {:form-params {:grant_type "authorization_code"
+                                              :code (slurp body)
+                                              :client_id (:client-id env)
+                                              :client_secret (:client-secret env)
+                                              :redirect_uri redirect-uri}
+                                :throw-exceptions false})
+          slurp-json (comp #(json/parse-string % keyword) slurp)]
+      (if (= 200 (:status resp))
+        (let [id-token (-> resp :body slurp-json :id_token)]
+          (if-let [id-token (u/unsafe-unsign id-token)]
+            {:status 200
+             :body ""
+             :session {:user-id (user-id db id-token)}}
+            {:status 500
+             :body "Invalid token..."
+             :session {}}))
+        (let [resp (update resp :body slurp-json)]
+          (case (-> resp :body :error)
+            "redirect_uri_mismatch" (println "Wrong redirect uri:" redirect-uri))
           {:status 500
-           :body "Invalid token..."
-           :session {}}))
-      (let [resp (update resp :body slurp-json)]
-        (case (-> resp :body :error)
-          "redirect_uri_mismatch" (println "Wrong redirect uri:" redirect-uri))
-        {:status 500
-         :body ""
-         :session {}}))))
+           :body ""
+           :session {}})))))
 
 (defn not-found-handler [req]
   {:status 404
    :body
    (html
      [:html
-      (head "Not Found" "1")
+      (head (:path-for req) "Not Found" "1")
       [:body
        [:p "Oppps... Page not found."]]])})
+
+(defn handlers [{:keys [db] :as env}] 
+  (assert db)
+  {:home (wrap-user home-handler db)
+   :order (-> order-form-handler
+              (wrap-product db)
+              (wrap-auth)
+              (wrap-user db))
+   :post-order (-> order-post-handler
+                   (wrap-product db)
+                   (wrap-auth)
+                   (wrap-user db))
+   :oauth2-code (oauth2-code-handler env)})

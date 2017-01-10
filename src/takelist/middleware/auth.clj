@@ -5,4 +5,4 @@
   (fn [request]
     (if (:user request)
       (handler request)
-      (redirect "http://localhost:8080"))))
+      (redirect ((:path-for request) :home)))))
