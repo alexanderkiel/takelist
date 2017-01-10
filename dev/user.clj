@@ -2,6 +2,7 @@
   (:require [aleph.http :as http]
             [clojure.java.jdbc :as j]
             [clojure.tools.namespace.repl :refer [refresh]]
+            [environ.core :refer [env]]
             [takelist.app :refer [app]]))
 
 (def db {:classname "org.h2.Driver"
@@ -11,7 +12,7 @@
 (defonce server nil)
 
 (defn init []
-  (alter-var-root #'server (fn [_] (http/start-server (app {:db db}) {:port 8080}))))
+  (alter-var-root #'server (fn [_] (http/start-server (app (assoc env :db db)) {:port 8080}))))
 
 (defn reload []
   (.close server)
