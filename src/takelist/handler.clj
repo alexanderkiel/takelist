@@ -106,12 +106,12 @@
        [:p (let [{:keys [amount]} params]
              (format "Vielen Dank für das Bestellen von %s %s." amount (:name product)))]]])})
 
-(defn user-id [db {issuer :iss subject :sub given-name :given_name}]
+(defn user-id [db {issuer :iss subject :sub name :name}]
   (if-let [{:keys [id]} (db/find-user db [:id] {:issuer issuer :subject subject})]
     (do
-      (db/update-user! db id {:name given-name})
+      (db/update-user! db id {:name name})
       id)
-    (db/create-user! db {:name given-name :issuer issuer :subject subject})))
+    (db/create-user! db {:name name :issuer issuer :subject subject})))
 
 (defn oauth2-code-handler [{:keys [base-uri]}]
   (fn [{:keys [body db]}]
@@ -149,7 +149,7 @@
       [:body
        [:p "Oppps... Page not found."]]])})
 
-(defn handlers [{:keys [db] :as env}] 
+(defn handlers [{:keys [db] :as env}]
   (assert db)
   {:home (wrap-user home-handler db)
    :order (-> order-form-handler
