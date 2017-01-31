@@ -13,3 +13,9 @@
 
 (s/def :user/subject
   ::non-blank-str)
+
+(s/def :product/id
+  uuid?)
+
+(s/def :product/name
+  ::non-blank-str)
