@@ -3,7 +3,8 @@
             [clojure.java.jdbc :as j]
             [clojure.tools.namespace.repl :refer [refresh]]
             [environ.core :refer [env]]
-            [takelist.app :refer [app]]))
+            [takelist.app :refer [app]]
+            [clojure.spec :as s]))
 
 (def db {:classname "org.h2.Driver"
          :subprotocol "h2:file"

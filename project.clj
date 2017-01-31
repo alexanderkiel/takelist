@@ -7,7 +7,7 @@
   :dependencies
   [
    ;; Webserver
-   [aleph "0.4.1"]
+   [aleph "0.4.2-alpha12"]
 
    ;; Routing
    [bidi "2.0.16"]
@@ -22,7 +22,7 @@
    [hiccup "1.0.5"]
 
    ;; Clojure itself
-   [org.clojure/clojure "1.8.0"]
+   [org.clojure/clojure "1.9.0-alpha14"]
 
    ;; Database driver
    [org.clojure/java.jdbc "0.6.1"]
@@ -36,7 +36,9 @@
                              ;; In-Memory Database System
                              [com.h2database/h2 "1.4.192"]
 
-                             [org.clojure/tools.namespace "0.2.11"]]}
+                             [org.clojure/tools.namespace "0.2.11"]
+
+                             [org.clojure/test.check "0.9.0"]]}
 
              :production
              {:main takelist.core}})
