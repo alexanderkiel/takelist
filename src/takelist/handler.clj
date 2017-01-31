@@ -11,6 +11,7 @@
             [takelist.db :as db]
             [takelist.middleware.auth :refer [wrap-auth]]
             [takelist.middleware.product :refer [wrap-product]]
+            [takelist.middleware.products :refer [wrap-products]]
             [takelist.middleware.user :refer [wrap-user]]
             [takelist.util :as u]))
 
@@ -56,7 +57,17 @@
     }
     " (:client-id env) (path-for :oauth2-code))]])
 
-(defn home-handler [{:keys [user path-for]}]
+(defn- order-path [path-for id]
+  (str (path-for :order) "?product-id=" id))
+
+(defn- product-list [products path-for]
+  [:div
+   [:h1 "Produktliste"]
+   [:div {:class "list-group"}
+    (for [{:keys [id name]} products]
+      [:a {:class "list-group-item" :href (order-path path-for id)} name])]])
+ 
+(defn home-handler [{:keys [user path-for products]}]
   {:status 200
    :body
    (html
@@ -67,7 +78,7 @@
         [:div {:class "row"}
          [:div {:class "col-xs-4 col-xs-offset-4"}
           (if user
-            [:p "Produktliste"]
+            (product-list products path-for)
             [:button {:id "signinButton"} "Mit Google einloggen"])
           [:script
            "$('#signinButton').click(function() {
@@ -151,7 +162,9 @@
 
 (defn handlers [{:keys [db] :as env}]
   (assert db)
-  {:home (wrap-user home-handler db)
+  {:home (-> home-handler
+             (wrap-products db)
+             (wrap-user db))
    :order (-> order-form-handler
               (wrap-product db)
               (wrap-auth)

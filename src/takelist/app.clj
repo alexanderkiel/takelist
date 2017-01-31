@@ -1,6 +1,7 @@
 (ns takelist.app
   (:require [bidi.bidi :as bidi]
             [bidi.ring :as bidi-ring]
+            [clojure.spec :as s]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.session :refer [wrap-session]]
@@ -21,6 +22,11 @@
 (defn wrap-path-for [handler path-for]
   (fn [req]
     (handler (assoc req :path-for path-for))))
+
+(s/fdef path-for
+  :ret (s/fspec :args (s/cat :handler keyword?
+                             :params (s/* (s/cat :key keyword?
+                                                 :value any?)))))
 
 (defn path-for [base-uri routes]
   (fn [handler & params]

@@ -20,6 +20,3 @@
     {:issuer "foo", :subject "bar"}
     "select id from tkl_user where issuer = ? and subject = ?"))
 
-(deftest create-user-test
-  (testing "Blank username is forbidden"
-    (is (thrown? Exception (create-user! user/db {:name "" :issuer "foo" :subject "bar"})))))

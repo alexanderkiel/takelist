@@ -3,6 +3,7 @@
             [clojure.spec :as s]
             [clojure.spec.gen :as g]
             [clojure.string :as str]
+            [takelist.spec]
             [takelist.util :as u])
   (:import [java.util UUID]))
 
@@ -53,3 +54,10 @@
 (defn update-user! [db id props]
   (j/update! db "tkl_user" props ["id = ?" id])
   nil)
+
+(s/fdef list-products
+  :args (s/cat :db ::db)
+  :ret (s/coll-of (s/keys :req-un [:product/id :product/name])))
+
+(defn list-products [db]
+  (j/query db ["SELECT id, name FROM tkl_product ORDER BY name"]))
