@@ -14,7 +14,7 @@
   (s/and ::parse-int pos?))
 
 (s/def :user/id
-  ::non-blank-str)
+  uuid?)
 
 (s/def :user/name
   ::non-blank-str)

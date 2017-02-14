@@ -43,7 +43,7 @@
                       ")"))
   (j/execute! db (str "CREATE TABLE tkl_order (id UUID PRIMARY KEY"
                       ", product_id UUID NOT NULL REFERENCES tkl_product(id)"
-                      ", user_id VARCHAR(36) NOT NULL REFERENCES tkl_user(id)"
+                      ", user_id UUID NOT NULL REFERENCES tkl_user(id)"
                       ", order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL"
                       ", amount INTEGER NOT NULL"
                       ", CONSTRAINT amount_positive CHECK (amount > 0)"
