@@ -1,5 +1,7 @@
 # Takelist
 
+[![Build Status](https://travis-ci.org/alexanderkiel/takelist.svg?branch=master)](https://travis-ci.org/alexanderkiel/takelist)
+
 An application which manages things like coffee or drinks which are available in a shared space at work. Takelist is like an honesty box as a service.
 
 ## Usage
