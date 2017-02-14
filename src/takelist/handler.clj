@@ -128,8 +128,9 @@
   (fn [{:keys [body db]}]
     (let [uri "https://www.googleapis.com/oauth2/v4/token"
           redirect-uri base-uri
+          code (slurp body)
           resp @(http/post uri {:form-params {:grant_type "authorization_code"
-                                              :code (slurp body)
+                                              :code code
                                               :client_id (:client-id env)
                                               :client_secret (:client-secret env)
                                               :redirect_uri redirect-uri}
@@ -146,6 +147,7 @@
              :session {}}))
         (let [resp (update resp :body slurp-json)]
           (case (-> resp :body :error)
+            "invalid_request" (println "Invalid request with code:" code "and redirect-uri:" redirect-uri)
             "redirect_uri_mismatch" (println "Wrong redirect uri:" redirect-uri))
           {:status 500
            :body ""
