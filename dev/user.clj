@@ -38,8 +38,8 @@
                       ", subject varchar NOT NULL"
                       ", CONSTRAINT uq_iss_sub UNIQUE (issuer, subject)"
                       ")"))
-  (j/execute! db (str "CREATE TABLE tkl_order (id varchar(36) primary key"
-  ", product_id varchar(36) NOT NULL REFERENCES tkl_product(id)"
+  (j/execute! db (str "CREATE TABLE tkl_order (id uuid primary key"
+  ", product_id uuid NOT NULL REFERENCES tkl_product(id)"
   ", user_id varchar(36) NOT NULL REFERENCES tkl_user(id)"
   ", order_date timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL"
   ")"))
@@ -54,4 +54,5 @@
 (comment
   (j/query db ["select * from tkl_product"])
   (j/query db ["select * from tkl_user"])
+  (j/query db ["select * from tkl_order"])
   )

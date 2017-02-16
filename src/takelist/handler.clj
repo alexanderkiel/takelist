@@ -1,8 +1,9 @@
 (ns takelist.handler
   "Here are all our handlers."
   (:require [aleph.http :as http]
-            [buddy.sign.jwt :as jwt]
             [cheshire.core :as json]
+            [clj-time.core :as time]
+            [clj-time.format :as time-format]
             [clojure.java.jdbc :as j]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
@@ -12,6 +13,7 @@
             [takelist.middleware.auth :refer [wrap-auth]]
             [takelist.middleware.product :refer [wrap-product]]
             [takelist.middleware.products :refer [wrap-products]]
+            [takelist.middleware.store-order :refer [wrap-store-order]]
             [takelist.middleware.user :refer [wrap-user]]
             [takelist.util :as u]))
 
@@ -66,7 +68,7 @@
    [:div {:class "list-group"}
     (for [{:keys [id name]} products]
       [:a {:class "list-group-item" :href (order-path path-for id)} name])]])
- 
+
 (defn home-handler [{:keys [user path-for products]}]
   {:status 200
    :body
@@ -107,7 +109,12 @@
                [:option {:value x} x])]]
            [:button {:type "submit" :class "btn btn-primary"} "Ok"]]]]]]])})
 
-(defn order-post-handler [{:keys [product params path-for]}]
+(defn- to-time-str [date]
+  (-> (:hour-minute time-format/formatters)
+      (time-format/with-zone (time/time-zone-for-id "Europe/Berlin"))
+      (time-format/unparse date)))
+
+(defn order-post-handler [{:keys [product params path-for order]}]
   {:status 200
    :body
    (html
@@ -115,7 +122,12 @@
       (head path-for)
       [:body
        [:p (let [{:keys [amount]} params]
-             (format "Vielen Dank für das Bestellen von %s %s." amount (:name product)))]]])})
+             (format "Vielen Dank für das Bestellen von %s %s um %s Uhr."
+                     amount (:name product)
+                     (to-time-str (:order/order-date order))))]]])})
+
+(comment
+  (time-format/show-formatters))
 
 (defn user-id [db {issuer :iss subject :sub name :name}]
   (if-let [{:keys [id]} (db/find-user db [:id] {:issuer issuer :subject subject})]
@@ -172,6 +184,7 @@
               (wrap-auth)
               (wrap-user db))
    :post-order (-> order-post-handler
+                   (wrap-store-order db)
                    (wrap-product db)
                    (wrap-auth)
                    (wrap-user db))
