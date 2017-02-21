@@ -1,11 +1,14 @@
 (ns user
   (:require [aleph.http :as http]
             [clojure.java.jdbc :as j]
+            [clojure.spec.test :as st]
             [clojure.tools.namespace.repl :refer [refresh]]
             [environ.core :refer [env]]
             [takelist.app :refer [app]]
             [clojure.spec :as s])
   (:import [java.util UUID]))
+
+(st/instrument)
 
 (def db {:classname "org.h2.Driver"
          :subprotocol "h2:file"
@@ -38,11 +41,13 @@
                       ", subject varchar NOT NULL"
                       ", CONSTRAINT uq_iss_sub UNIQUE (issuer, subject)"
                       ")"))
-  (j/execute! db (str "CREATE TABLE tkl_order (id varchar(36) primary key"
-  ", product_id varchar(36) NOT NULL REFERENCES tkl_product(id)"
-  ", user_id varchar(36) NOT NULL REFERENCES tkl_user(id)"
-  ", order_date timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL"
-  ")"))
+  (j/execute! db (str "CREATE TABLE tkl_order (id UUID PRIMARY KEY"
+                      ", product_id UUID NOT NULL REFERENCES tkl_product(id)"
+                      ", user_id VARCHAR(36) NOT NULL REFERENCES tkl_user(id)"
+                      ", order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL"
+                      ", amount INTEGER NOT NULL"
+                      ", CONSTRAINT amount_positive CHECK (amount > 0)"
+                      ")"))
 )
 
 (comment
@@ -54,4 +59,5 @@
 (comment
   (j/query db ["select * from tkl_product"])
   (j/query db ["select * from tkl_user"])
+  (j/query db ["select * from tkl_order"])
   )

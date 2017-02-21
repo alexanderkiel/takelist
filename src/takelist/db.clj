@@ -1,5 +1,7 @@
 (ns takelist.db
-  (:require [clojure.java.jdbc :as j]
+  (:require [clj-time.core :as time]
+            [clj-time.coerce :as time-coerce]
+            [clojure.java.jdbc :as j]
             [clojure.spec :as s]
             [clojure.spec.gen :as g]
             [clojure.string :as str]
@@ -61,3 +63,22 @@
 
 (defn list-products [db]
   (j/query db ["SELECT id, name FROM tkl_product ORDER BY name"]))
+
+(s/fdef create-order!
+  :args (s/cat :db ::db
+               :user (s/keys :req-un [:user/id])
+               :product (s/keys :req-un [:product/id])
+               :amount pos-int?)
+  :ret :takelist/order)
+
+(defn create-order! [db {user-id :id} {product-id :id} amount]
+  (let [order-id (UUID/randomUUID)
+        order-date (time/now)]
+    (j/insert! db "tkl_order"
+               [:id :product_id :user_id :order_date :amount]
+               [order-id product-id user-id (time-coerce/to-date order-date) amount])
+    #:order{:id order-id
+            :product-id product-id
+            :user-id user-id
+            :order-date order-date
+            :amount amount}))

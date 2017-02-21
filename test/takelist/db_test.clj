@@ -22,4 +22,4 @@
 
 (deftest create-user-test
   (testing "Blank username is forbidden"
-    (is (thrown? Exception (create-user! user/db {:name "" :issuer "foo" :subject "bar"})))))
+    (is (thrown? Exception (create-user! {} {:name "" :issuer "foo" :subject "bar"})))))

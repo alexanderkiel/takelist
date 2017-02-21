@@ -15,6 +15,9 @@
    ;; JSON Web Token
    [buddy/buddy-sign "1.3.0"]
 
+   ;; time lib
+   [clj-time "0.13.0"]
+
    ;; Umgebungsvariablen
    [environ "1.1.0"]
 
