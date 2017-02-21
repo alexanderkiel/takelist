@@ -114,17 +114,17 @@
       (time-format/with-zone (time/time-zone-for-id "Europe/Berlin"))
       (time-format/unparse date)))
 
-(defn order-post-handler [{:keys [product params path-for order]}]
+(defn order-post-handler [{:keys [product path-for order]}]
   {:status 200
    :body
    (html
      [:html
       (head path-for)
       [:body
-       [:p (let [{:keys [amount]} params]
-             (format "Vielen Dank für das Bestellen von %s %s um %s Uhr."
-                     amount (:name product)
-                     (to-time-str (:order/order-date order))))]]])})
+       [:p (format "Vielen Dank für das Bestellen von %s %s um %s Uhr."
+                   (:order/amount order)
+                   (:name product)
+                   (to-time-str (:order/order-date order)))]]])})
 
 (comment
   (time-format/show-formatters))
