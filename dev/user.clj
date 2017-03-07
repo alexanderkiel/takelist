@@ -35,7 +35,7 @@
   (j/execute! db "DROP TABLE tkl_product")
   (j/execute! db "DROP TABLE tkl_user")
   (j/execute! db "CREATE TABLE tkl_product (id uuid primary key, name varchar)")
-  (j/execute! db (str "CREATE TABLE tkl_user (id varchar(36) primary key"
+  (j/execute! db (str "CREATE TABLE tkl_user (id UUID primary key"
                       ", name varchar NOT NULL"
                       ", issuer varchar NOT NULL"
                       ", subject varchar NOT NULL"
