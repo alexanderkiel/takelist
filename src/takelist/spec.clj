@@ -7,11 +7,11 @@
 (s/def ::non-blank-str
   (s/and string? (complement str/blank?)))
 
-(s/def ::parse-int
+(s/def :takelist.http.param/int
   (s/conformer (fn [x] (try (Integer/parseInt x) (catch Exception _ ::s/invalid)))))
 
-(s/def ::parse-pos-int
-  (s/and ::parse-int pos?))
+(s/def :takelist.http.param/pos-int
+  (s/and :takelist.http.param/int pos?))
 
 (s/def :user/id
   uuid?)
