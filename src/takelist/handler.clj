@@ -13,7 +13,7 @@
             [takelist.middleware.auth :refer [wrap-auth]]
             [takelist.middleware.product :refer [wrap-product]]
             [takelist.middleware.products :refer [wrap-products]]
-            [takelist.middleware.store-order :refer [wrap-store-order]]
+            [takelist.middleware.order :refer [wrap-store-order wrap-user-order]]
             [takelist.middleware.user :refer [wrap-user]]
             [takelist.util :as u]))
 
@@ -183,6 +183,10 @@
               (wrap-product db)
               (wrap-auth)
               (wrap-user db))
+   #_:order-confirmation #_(-> order-confirmation-handler
+                           (wrap-user-order db)
+                           (wrap-auth)
+                           (wrap-user db))
    :post-order (-> order-post-handler
                    (wrap-store-order db)
                    (wrap-product db)

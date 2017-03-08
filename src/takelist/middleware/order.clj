@@ -1,4 +1,4 @@
-(ns takelist.middleware.store-order
+(ns takelist.middleware.order
   (:require [takelist.db :as db]
             [clojure.spec :as s]
             [ring.util.response :as ring]
@@ -18,3 +18,8 @@
             (ring/status 400))
         (let [order (db/create-order! db user product amount)]
           (handler (assoc request :order order)))))))
+
+(defn wrap-user-order
+  [handler db]
+  (fn [])
+  )

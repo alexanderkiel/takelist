@@ -12,6 +12,12 @@
 (s/def ::db
   any?)
 
+(s/def ::query-expr
+  (s/or :property keyword? :join (s/map-of keyword? ::query)))
+
+(s/def ::query
+  (s/coll-of ::query-expr :kind vector? :min-count 1))
+
 (s/fdef find-user-query
   :args (s/cat :props (s/and (s/coll-of keyword?) #(pos? (count %)))
                :constraints (s/map-of keyword? any?))
@@ -82,3 +88,37 @@
             :user-id user-id
             :order-date order-date
             :amount amount}))
+
+(s/fdef find-order
+  :args (s/cat :db ::db :id :order/id :query ::query)
+  :ret (s/nilable :takelist/order))
+
+
+(comment
+  (second (first {:test :a}))
+  (s/conform ::query [:order/amount {:order/product [:product/name]}])
+  (def query [:order/amount :order/price {:order/product [:product/name]} {:a [:b]}])
+  (def table "order")
+  (def id "abc123")
+  )
+
+(defn pull-order [db id query]
+  (j/query db ["SELECT * FROM tkl_order"]))
+
+(defn build-query [table query id]
+  (let [projection (->> query
+                        (mapcat (fn [query-expr]
+                                  (if (keyword? query-expr)
+                                    [(name query-expr)]
+                                    (let [[edge query] (first query-expr)]
+                                      (->> (filter keyword? query)
+                                           (map name)
+                                           (map (fn [column] (str "tkl_" (name edge) "." column))))))))
+                        (str/join ","))
+        joins (->> (for [join (filter map? query)
+                         :let [[edge] (first join)
+                               foreign-key (str (name edge) "_id")
+                               table (str "tkl_" (name edge))]]
+                     (str "JOIN " table " ON " foreign-key " = " table ".id"))
+                   (str/join " "))]
+    (format "SELECT %s FROM %s %s WHERE id = %s" projection table joins id)))
