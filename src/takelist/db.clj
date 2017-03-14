@@ -97,7 +97,7 @@
 (comment
   (second (first {:test :a}))
   (s/conform ::query [:order/amount {:order/product [:product/name]}])
-  (def query [:order/amount :order/price {:order/product [:product/name]} {:a [:b]}])
+  (def query [:order/amount :order/price {:order/product [:product/name {:product/owner [:owner/name]}]} {:order/supplier [:supplier/name :supplier/id]}])
   (def table "order")
   (def id "abc123")
   )
@@ -122,3 +122,58 @@
                      (str "JOIN " table " ON " foreign-key " = " table ".id"))
                    (str/join " "))]
     (format "SELECT %s FROM %s %s WHERE id = %s" projection table joins id)))
+
+
+(comment
+  (def testVec [1 2 3 4 5])
+  (mapcat (fn [q] [(+ 1 q)]) testVec)
+
+  (map (fn [q] [(+ 1 q)]) testVec)
+
+  (loop [i 1 lis []]
+    (println i)
+    (if (< i 10)
+      (recur (inc i) (conj lis i))
+      (conj lis i)))
+
+  (range 10)
+  )
+
+(defn table-alias [path]
+  (str/join "_" (map name path)))
+
+(defn extract-projections
+  "Extracts the different projections (attributes) from the given query and returns
+ them as a vector."
+  [path query]
+  (mapcat
+    (fn [expr]
+      (if (keyword? expr)
+        (if (seq path)
+          (let [table (table-alias path)
+                alias (str/join "_" (map name (conj path expr)))]
+            [(str table "." (name expr) " AS " alias)])
+          [(name expr)])
+        (let [[edge query] (first expr)]
+          (extract-projections (conj path edge) query))))
+    query))
+
+
+(defn extract-joins
+  ""
+  [path query]
+  (transduce
+    (filter map?)
+    (completing
+      (fn [ret expr]
+        (let [[edge query] (first expr)
+              foreign-key  (str (table-alias path) "." (name edge) "_id")
+              table (str "tkl_" (name edge))]
+          (apply conj ret (str "JOIN " table " AS " (table-alias (conj path edge)) " ON " foreign-key " = " (table-alias (conj path edge)) ".id") (extract-joins (conj path edge) query)))))
+    []
+    query))
+
+(comment
+  completing
+  (extract-projections [:order] query)
+  (extract-joins [:order] query))
