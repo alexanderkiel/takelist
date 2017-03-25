@@ -13,6 +13,11 @@
 (s/def :takelist.http.param/pos-int
   (s/and :takelist.http.param/int pos?))
 
+(s/def ::db
+  some?)
+
+;; ---- Domain Specific Specs -------------------------------------------------
+
 (s/def :user/id
   uuid?)
 
@@ -48,4 +53,3 @@
 
 (s/def :takelist/order
   (s/keys :req [:order/id :order/product-id :order/user-id :order/order-date :order/amount]))
-
