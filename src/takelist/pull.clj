@@ -53,8 +53,11 @@
 (s/def ::table-expr
   (s/multi-spec table-expr-spec :type))
 
+(defn sql-name [expr]
+  (str/replace (name expr) \- \_))
+
 (defn alias [path expr]
-  (str path "_" (name expr)))
+  (str path "_" (sql-name expr)))
 
 (s/fdef extract-projections
   :args (s/cat :path ::path :query ::query))
@@ -69,10 +72,10 @@
         (if (seq path)
           (let [table path
                 alias (alias path expr)]
-            [(str table "." (name expr) " AS " alias)])
+            [(str table "." (sql-name expr) " AS " alias)])
           [(name expr)])
         (let [[edge query] (first expr)]
-          (extract-projections (str path "_" (name edge)) query))))
+          (extract-projections (str path "_" (sql-name edge)) query))))
     query))
 
 (defn primary-key
@@ -182,12 +185,12 @@
     (build-result* path query row)))
 
 (s/fdef pull
-  :args (s/cat :db ::spec/db :query ::query :id some?))
+  :args (s/cat :db ::spec/db :query ::query :ident ::spec/ident))
 
 (defn pull
   "Returns a hierarchical selection of properties regarding query for entity
   with id."
-  [db query id]
-  (let [table-key (some-> (some #(when (keyword? %) %) query) namespace keyword)
+  [db query [key id]]
+  (let [table-key (-> key namespace keyword)
         build-result #(build-result table-key query %)]
     (j/query db [(build-query table-key query) id] {:row-fn build-result})))

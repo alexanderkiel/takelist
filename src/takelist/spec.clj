@@ -1,6 +1,7 @@
 (ns takelist.spec
   (:require [clojure.spec :as s]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:import [java.util UUID]))
 
 (set! *warn-on-reflection* true)
 
@@ -13,8 +14,18 @@
 (s/def :takelist.http.param/pos-int
   (s/and :takelist.http.param/int pos?))
 
+(s/def :takelist.http.param/uuid
+  (s/conformer (fn [x] (try (UUID/fromString x) (catch Exception _ ::s/invalid)))))
+
+(s/def :takelist.http/error-status
+  (s/with-gen #(s/int-in-range? 400 600 %)
+              #(s/gen #{400 401 500})))
+
 (s/def ::db
   some?)
+
+(s/def ::ident
+  (s/tuple keyword? some?))
 
 ;; ---- Domain Specific Specs -------------------------------------------------
 

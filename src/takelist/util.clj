@@ -2,7 +2,10 @@
   (:require [buddy.core.codecs :as codecs]
             [buddy.core.codecs.base64 :as b64]
             [cheshire.core :as json]
-            [clojure.string :as str]))
+            [clojure.spec :as s]
+            [clojure.string :as str]
+            [ring.util.response :as ring]
+            [takelist.spec]))
 
 (defn only
   "Like first but throws on more than one element."
@@ -20,3 +23,15 @@
     (-> (b64/decode payload)
         (codecs/bytes->str)
         (json/parse-string keyword))))
+
+(s/fdef error-resp
+  :args (s/cat :status :takelist.http/error-status
+               :msg string?)
+  :ret map?
+  :fn #(= (-> % :args :status)
+          (-> % :ret :status)))
+
+(defn error-resp [status msg]
+  (-> (ring/response msg)
+      (ring/content-type "text/plain")
+      (ring/status status)))

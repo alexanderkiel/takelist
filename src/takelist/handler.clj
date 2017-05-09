@@ -9,6 +9,7 @@
             [clojure.string :as str]
             [environ.core :refer [env]]
             [hiccup.core :refer [html]]
+            [ring.util.response :as r]
             [takelist.db :as db]
             [takelist.middleware.auth :refer [wrap-auth]]
             [takelist.middleware.product :refer [wrap-product]]
@@ -114,7 +115,10 @@
       (time-format/with-zone (time/time-zone-for-id "Europe/Berlin"))
       (time-format/unparse date)))
 
-(defn order-post-handler [{:keys [product path-for order]}]
+(defn order-post-handler [{:keys [path-for order]}]
+  (r/redirect (str (path-for :order-confirmation) "?order-id=" (:order/id order))))
+
+(defn order-confirmation-handler [{:keys [path-for order]}]
   {:status 200
    :body
    (html
@@ -123,11 +127,8 @@
       [:body
        [:p (format "Vielen Dank für das Bestellen von %s %s um %s Uhr."
                    (:order/amount order)
-                   (:name product)
+                   (:product/name (:order/product order))
                    (to-time-str (:order/order-date order)))]]])})
-
-(comment
-  (time-format/show-formatters))
 
 (defn user-id [db {issuer :iss subject :sub name :name}]
   (if-let [{:keys [id]} (db/find-user db [:id] {:issuer issuer :subject subject})]
@@ -183,8 +184,8 @@
               (wrap-product db)
               (wrap-auth)
               (wrap-user db))
-   #_:order-confirmation #_(-> order-confirmation-handler
-                           (wrap-user-order db)
+   :order-confirmation (-> order-confirmation-handler
+                           (wrap-user-order db [:order/amount {:order/product [:product/name]} :order/order-date])
                            (wrap-auth)
                            (wrap-user db))
    :post-order (-> order-post-handler

@@ -5,6 +5,7 @@
             [clojure.spec :as s]
             [clojure.spec.gen :as g]
             [clojure.string :as str]
+            [takelist.pull :as pull]
             [takelist.spec :as spec]
             [takelist.util :as u])
   (:import [java.util UUID]))
@@ -60,6 +61,16 @@
 
 (defn list-products [db]
   (j/query db ["SELECT id, name FROM tkl_product ORDER BY name"]))
+
+(s/fdef find-order
+  :args (s/cat :db ::spec/db :query ::pull/query :id uuid?)
+  :ret (s/nilable :takelist/order))
+
+(defn find-order [db query id]
+  (when-let [order (first (pull/pull db query [:order/id id]))]
+    (if (some #{:order/order-date} query)
+      (update order :order/order-date time-coerce/from-date)
+      order)))
 
 (s/fdef create-order!
   :args (s/cat :db ::spec/db
