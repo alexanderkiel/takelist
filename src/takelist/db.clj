@@ -5,12 +5,10 @@
             [clojure.spec :as s]
             [clojure.spec.gen :as g]
             [clojure.string :as str]
-            [takelist.spec]
+            [takelist.pull :as pull]
+            [takelist.spec :as spec]
             [takelist.util :as u])
   (:import [java.util UUID]))
-
-(s/def ::db
-  any?)
 
 (s/fdef find-user-query
   :args (s/cat :props (s/and (s/coll-of keyword?) #(pos? (count %)))
@@ -27,7 +25,7 @@
     (str/join " and " (for [[key] constraints] (str (name key) " = ?")))))
 
 (s/fdef find-user
-  :args (s/cat :db ::db
+  :args (s/cat :db ::spec/db
                :props (s/coll-of keyword?)
                :constraints (s/keys :opt-un [:user/name :user/issuer :user/subject]))
   :ret map?)
@@ -42,7 +40,7 @@
     (u/only (j/query db sql-params))))
 
 (s/fdef create-user!
-  :args (s/cat :db ::db :user (s/keys :req-un [:user/name :user/issuer :user/subject]))
+  :args (s/cat :db ::spec/db :user (s/keys :req-un [:user/name :user/issuer :user/subject]))
   :ret uuid?)
 
 (defn create-user! [db {:keys [name issuer subject]}]
@@ -58,14 +56,24 @@
   nil)
 
 (s/fdef list-products
-  :args (s/cat :db ::db)
+  :args (s/cat :db ::spec/db)
   :ret (s/coll-of (s/keys :req-un [:product/id :product/name])))
 
 (defn list-products [db]
   (j/query db ["SELECT id, name FROM tkl_product ORDER BY name"]))
 
+(s/fdef find-order
+  :args (s/cat :db ::spec/db :query ::pull/query :id uuid?)
+  :ret (s/nilable :takelist/order))
+
+(defn find-order [db query id]
+  (when-let [order (first (pull/pull db query [:order/id id]))]
+    (if (some #{:order/order-date} query)
+      (update order :order/order-date time-coerce/from-date)
+      order)))
+
 (s/fdef create-order!
-  :args (s/cat :db ::db
+  :args (s/cat :db ::spec/db
                :user (s/keys :req-un [:user/id])
                :product (s/keys :req-un [:product/id])
                :amount pos-int?)

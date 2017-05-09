@@ -25,7 +25,7 @@
    [hiccup "1.0.5"]
 
    ;; Clojure itself
-   [org.clojure/clojure "1.9.0-alpha14"]
+   [org.clojure/clojure "1.9.0-alpha15"]
 
    ;; Database driver
    [org.clojure/java.jdbc "0.6.1"]
@@ -38,6 +38,8 @@
               :dependencies [
                              ;; In-Memory Database System
                              [com.h2database/h2 "1.4.192"]
+
+                             [juxt/iota "0.2.3"]
 
                              [org.clojure/tools.namespace "0.2.11"]
 
