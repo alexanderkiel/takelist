@@ -128,7 +128,8 @@
        [:p (format "Vielen Dank für das Bestellen von %s %s um %s Uhr."
                    (:order/amount order)
                    (:product/name (:order/product order))
-                   (to-time-str (:order/order-date order)))]]])})
+                   (to-time-str (:order/order-date order)))]
+       [:p [:a {:href (path-for :home)} "zurück"]]]])})
 
 (defn user-id [db {issuer :iss subject :sub name :name}]
   (if-let [{:keys [id]} (db/find-user db [:id] {:issuer issuer :subject subject})]
