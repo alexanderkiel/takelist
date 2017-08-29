@@ -18,6 +18,13 @@
    ;; time lib
    [clj-time "0.13.0"]
 
+   ;; Anomalies capture errors as information that is simple, actionable,
+   ;; generic, and extensible.
+   [com.cognitect/anomalies "0.1.12"]
+
+   ;; managing the lifecycle and dependencies of software components
+   [com.stuartsierra/component "0.3.2"]
+
    ;; Umgebungsvariablen
    [environ "1.1.0"]
 
@@ -36,6 +43,9 @@
   :profiles {:dev
              {:source-paths ["dev"]
               :dependencies [
+                             ;; provides checking macro
+                             [com.gfredericks/test.chuck "0.2.7"]
+
                              ;; In-Memory Database System
                              [com.h2database/h2 "1.4.192"]
 

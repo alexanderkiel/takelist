@@ -6,7 +6,7 @@
             [environ.core :refer [env]]
             [takelist.app :refer [app]]
             [clojure.spec :as s])
-  (:import [java.util UUID]))
+  (:import [java.util UUID Collections ArrayList]))
 
 (st/instrument)
 
