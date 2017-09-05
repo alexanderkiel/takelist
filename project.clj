@@ -46,4 +46,10 @@
                              [org.clojure/test.check "0.9.0"]]}
 
              :production
-             {:main takelist.core}})
+             {:main takelist.core}
+             :uberjar
+             {:dependencies [
+                             ;; In-Memory Database System
+                             [com.h2database/h2 "1.4.192"]]
+              :aot  [takelist.core]
+              :main takelist.core}})
