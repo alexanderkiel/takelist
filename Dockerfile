@@ -1,5 +1,9 @@
-FROM java:openjdk-8-alpine
+FROM clojure:alpine
 
-ADD target/takelist-*-standalone.jar /takelist.jar
+ADD src /app/src
+ADD project.clj /app
 
-CMD ["/usr/bin/java", "-jar", "/takelist.jar"]
+WORKDIR /app
+RUN lein uberjar
+
+CMD ["/usr/bin/java", "-jar", "/app/target/takelist-latest-standalone.jar"]

@@ -1,4 +1,4 @@
-(defproject takelist "0.1-SNAPSHOT"
+(defproject takelist "latest"
   :description "An application which manages things like coffee or drinks which are available in a shared space at work."
   :url "https://github.com/alexanderkiel/takelist"
   :license {:name "Eclipse Public License"
