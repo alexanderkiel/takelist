@@ -18,6 +18,9 @@
    ;; time lib
    [clj-time "0.13.0"]
 
+   ;; managing the lifecycle and dependencies of software components
+   [com.stuartsierra/component "0.3.2"]
+
    ;; Umgebungsvariablen
    [environ "1.1.0"]
 

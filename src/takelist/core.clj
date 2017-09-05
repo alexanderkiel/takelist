@@ -1,24 +1,14 @@
 (ns takelist.core
   (:require [aleph.http :as http]
+            [com.stuartsierra.component :as comp]
             [environ.core :refer [env]]
-            [takelist.app :refer [app]])
+            [takelist.app :refer [app]]
+            [takelist.db :as db])
   (:gen-class))
 
+(def h2 (db/h2 (env :database-uri)))
 
-(def db {:classname "org.h2.Driver"
-         :subprotocol "h2:file"
-         :subname (env :database-uri)})
-
-(def base-uri (env :base-uri))
-
-(def client-id (env :client-id))
-
-(def client-secret (env :client-secret))
-
-(defn -main [& args]
-  (let [server (http/start-server (app (assoc env :db db
-                                                :base-uri base-uri
-                                                :client-id client-id
-                                                :client-secret client-secret))
-                                {:port 8080})]
+(defn -main [& _]
+  (let [server (http/start-server (app (assoc env :db (:db (comp/start h2))))
+                                  {:port 8080})]
     (.wait-for-close server)))

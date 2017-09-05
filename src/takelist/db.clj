@@ -5,10 +5,56 @@
             [clojure.spec :as s]
             [clojure.spec.gen :as g]
             [clojure.string :as str]
+            [com.stuartsierra.component :refer [Lifecycle]]
             [takelist.pull :as pull]
             [takelist.spec :as spec]
             [takelist.util :as u])
   (:import [java.util UUID]))
+
+(def product-create-stmt
+  (str "CREATE TABLE IF NOT EXISTS tkl_product ("
+       "id uuid constraint tkl_product_pk primary key, name varchar)"))
+
+(def create-user-stmt
+  (str "CREATE TABLE IF NOT EXISTS tkl_user ("
+       "id UUID constraint tkl_user_pk primary key"
+       ", name varchar NOT NULL"
+       ", issuer varchar NOT NULL"
+       ", subject varchar NOT NULL"
+       ", CONSTRAINT uq_iss_sub UNIQUE (issuer, subject)"
+       ")"))
+
+(def create-order-stmt
+  (str "CREATE TABLE IF NOT EXISTS tkl_order ("
+       "id UUID constraint tkl_order_pk PRIMARY KEY"
+       ", product_id UUID NOT NULL REFERENCES tkl_product(id)"
+       ", user_id UUID NOT NULL REFERENCES tkl_user(id)"
+       ", order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL"
+       ", amount INTEGER NOT NULL"
+       ", CONSTRAINT amount_positive CHECK (amount > 0)"
+       ")"))
+
+(defrecord H2 [h2-db-file db]
+  Lifecycle
+  (start [this]
+    (let [db {:classname "org.h2.Driver"
+              :subprotocol "h2:file"
+              :subname h2-db-file}]
+      (j/execute! db product-create-stmt)
+      (j/execute! db create-user-stmt)
+      (j/execute! db create-order-stmt)
+      (try
+        (j/insert! db "tkl_product" [:id :name]
+                   [#uuid "d84c78b0-95ce-4f49-abd4-03a3f018ad6e" "Kaffee"])
+        (j/insert! db "tkl_product" [:id :name]
+                   [#uuid "309d7778-458a-4bd9-8cdf-6d77336a0135" "Club Mate"])
+        (catch Exception _))
+      (assoc this :db db)))
+  (stop [this]
+    (assoc this :db nil)))
+
+(defn h2 [h2-db-file]
+  (map->H2 {:h2-db-file h2-db-file}))
 
 (s/fdef find-user-query
   :args (s/cat :props (s/and (s/coll-of keyword?) #(pos? (count %)))
