@@ -13,7 +13,8 @@
 
 (def product-create-stmt
   (str "CREATE TABLE IF NOT EXISTS tkl_product ("
-       "id uuid constraint tkl_product_pk primary key, name varchar)"))
+       "id uuid constraint tkl_product_pk primary key"
+       ", name varchar)"))
 
 (def create-user-stmt
   (str "CREATE TABLE IF NOT EXISTS tkl_user ("
@@ -117,6 +118,19 @@
     (if (some #{:order/order-date} query)
       (update order :order/order-date time-coerce/from-date)
       order)))
+
+(s/fdef list-user-orders
+  :args (s/cat :db ::spec/db :query ::pull/query)
+  :ret (s/coll-of :takelist/order))
+
+(defn list-user-orders [db {user-id :user/id}]
+  ;time-coerce/from-date
+  ;:order/order-date
+  (j/query db ["SELECT amount, tkl_product.name product_name FROM tkl_order JOIN tkl_product ON product_id = tkl_product.id WHERE user_id = ?" user-id]))
+
+(comment
+
+  )
 
 (s/fdef create-order!
   :args (s/cat :db ::spec/db

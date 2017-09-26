@@ -47,11 +47,17 @@
 (s/def :product/name
   ::non-blank-str)
 
+(s/def :takelist/product
+  (s/keys :req [:product/id :product/name]))
+
 (s/def :order/id
   uuid?)
 
 (s/def :order/product-id
   :product/id)
+
+(s/def :order/product
+  :takelist/product)
 
 (s/def :order/user-id
   :user/id)

@@ -70,7 +70,14 @@
     (for [{:keys [id name]} products]
       [:a {:class "list-group-item" :href (order-path path-for id)} name])]])
 
-(defn home-handler [{:keys [user path-for products]}]
+(defn- order-list [orders path-for]
+  [:div
+   [:h1 "Meine Bestellungen"]
+   [:div {:class "list-group"}
+    (for [{:keys [order/id order/product-id]} orders]
+      [:a {:class "list-group-item" :href (order-path path-for id)} name])]])
+
+(defn home-handler [{:keys [user path-for products user-orders]}]
   {:status 200
    :body
    (html
@@ -81,7 +88,9 @@
         [:div {:class "row"}
          [:div {:class "col-xs-4 col-xs-offset-4"}
           (if user
-            (product-list products path-for)
+            [:div
+             (product-list products path-for)
+             (order-list user-orders path-for)]
             [:button {:id "signinButton"} "Mit Google einloggen"])
           [:script
            "$('#signinButton').click(function() {
